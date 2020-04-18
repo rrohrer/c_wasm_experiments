@@ -16,7 +16,7 @@
     let loadedWasm = await WebAssembly.instantiate(wasmBytes, cRuntime);
 
     // call some C code
-    loadedWasm.instance.exports.print_up_to(1000);
+    loadedWasm.instance.exports.print_up_to(1024 * 1024 * 8);
     console.log("From js: " + loadedWasm.instance.exports.add(1, 3));
   };
   init();

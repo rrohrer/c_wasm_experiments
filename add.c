@@ -1,7 +1,7 @@
 // this function is defined in js!
 void print_num(int num);
 
-// also defined in js!
+// this constant is from the webassembly spec
 const unsigned long PAGE_SIZE = 65536;
 
 // a very silly malloc
@@ -9,10 +9,18 @@ extern unsigned char __heap_base;
 static unsigned long silly_heap = (unsigned long)&__heap_base;
 
 void *malloc(unsigned long size) {
-  unsigned int memory = silly_heap;
-  // hack to get around initial heap size.
-  __builtin_wasm_memory_grow(0, 10);
+  // get the current size of the heap.
+  unsigned int heap_size = __builtin_wasm_memory_size(0) * PAGE_SIZE;
+  unsigned int remaining_heap = heap_size - silly_heap;
 
+  // grow if heap is too small.
+  if (remaining_heap < size) {
+    unsigned int allocate_size = (size - remaining_heap) / PAGE_SIZE + 1;
+    __builtin_wasm_memory_grow(0, allocate_size);
+  }
+
+  // dish out the remaining memory
+  unsigned int memory = silly_heap;
   silly_heap += size;
   return (void *)memory;
 }
