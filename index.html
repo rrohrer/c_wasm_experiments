@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 
 <script type="module">
-  function init() {
-    fetch('add.wasm').then(response =>
-      response.arrayBuffer()
-    ).then(bytes =>
-      WebAssembly.instantiate(bytes)
-    ).then(results => {
-      console.log(results.instance.exports.add(1, 3));
-    });
+  async function init() {
+    // setup functions that can be called from C:
+    let cImports = { env: { print_num: function (num) { console.log("Your numer from c is: " + num); } } };
+
+    // load the wasm module
+    let wasmResponse = await fetch('add.wasm');
+    let wasmBytes = await wasmResponse.arrayBuffer();
+    let loadedWasm = await WebAssembly.instantiate(wasmBytes, cImports);
+
+    // call some C code
+    console.log("From js: " + loadedWasm.instance.exports.add(1, 3));
   };
   init();
 </script>
