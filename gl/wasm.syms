@@ -1,0 +1,4 @@
+# gl things are defined in index.html
+glViewport
+glClearColor
+glClear

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<style>
+  canvas {
+    display: block;
+    width: 280px;
+    height: 210px;
+    margin: auto;
+    padding: 0;
+    border: none;
+    background-color: black;
+  }
+</style>
+
+<script type="module">
+  var gl;
+
+  function glViewport(x, y, width, height) {
+    gl.viewport(x, y, width, height);
+  }
+
+  function glClearColor(r, g, b, a) {
+    gl.clearColor(r, g, b, a);
+  }
+
+  function glClear(settings) {
+    gl.clear(settings);
+  }
+
+  async function setupWasm() {
+    // setup functions that can be called from C:
+    let cRuntime = {
+      env:
+      {
+        glViewport,
+        glClearColor,
+        glClear
+      }
+    };
+
+    // load the wasm module
+    let wasmResponse = await fetch('gl.wasm');
+    let wasmBytes = await wasmResponse.arrayBuffer();
+    let loadedWasm = await WebAssembly.instantiate(wasmBytes, cRuntime);
+
+    return loadedWasm.instance.exports;
+  };
+  window.addEventListener('load', async function setupWebGL(evt) {
+    // remove this event listener because it only needs to run once.
+    window.removeEventListener(evt.type, setupWebGL, false);
+
+    // setup the canvas and GL context.
+    let canvas = document.querySelector('canvas');
+    gl = canvas.getContext('webgl');
+
+    // load the wasm.
+    let exports = await setupWasm();
+    exports.init_engine();
+
+    // setup the window callbacks.
+    function tick(timestamp) {
+      exports.update_game();
+      exports.update_renderer();
+      window.requestAnimationFrame(tick);
+    }
+    window.requestAnimationFrame(tick);
+  });
+</script>
+
+<body>
+  <canvas>Canvas isn't supported!</canvas>
+</body>
+
+</html>
