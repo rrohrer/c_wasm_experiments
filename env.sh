@@ -1,0 +1,1 @@
+alias cl=/usr/local/opt/llvm/bin/clang
